@@ -11,8 +11,9 @@ Usage:
   extdrm [command]
 
 Available Commands:
-  dump        Decrypt the contents of an extdrm encrypted filesystem
+  dump        Decrypt the contents of an encrypted extdrm filesystem
   help        Help about any command
+  presets     List built-in presets
   verify      Verify the integrity of a filesystem dump
 
 Flags:
@@ -21,32 +22,34 @@ Flags:
 Use "extdrm [command] --help" for more information about a command.
 ```
 
-To dump the contents of an encrypted filesystem, simply run `extdrm dump SOURCE DESTINATION PRESET`.
+To dump the contents of an encrypted filesystem, simply run `extdrm dump SOURCE DESTINATION`.
 
 After a successful dump, you may perform a file check by running `extdrm verify DESTINATION`.
 
 ## Presets
 
-This repository includes several preset files responsible for controlling the decryption process. These preset files can be found under the `presets` directory.
+Presets are responsible for controlling the decryption process. The dumper comes included with several built-in presets. <br>
+The dumper will try to automatically determine the correct preset to use, so most users won't have to worry about manually specifying one.
 
-List of included preset files and their respective games:
+List of built-in presets and their respective games:
 
 ### Arcade
 
-- presets/drs.json: DANCERUSH STARDOM
-- presets/resident.json: beatmania IIDX 30 RESIDENT ~ current
-- presets/vividwave.json: SOUND VOLTEX VIVID WAVE ~ current
-- presets/around.json: DANCE aROUND
+- drs: DANCERUSH STARDOM
+- iidx: beatmania IIDX 30 RESIDENT ~ current
+- sdvx: SOUND VOLTEX VIVID WAVE ~ current
+- dance_around: DANCE aROUND
+- polaris: Polaris Chord
 
 ### コナステ/Konasute:
 
-- presets/eac/bonga.json: Bombergirl
-- presets/eac/ddr.json: DanceDanceRevolution GRAND PRIX
-- presets/eac/gitadora.json: GITADORA
-- presets/infinitas_2020.json: beatmania IIDX INFINITAS 2020
-- presets/infinitas_2020_cache.json: beatmania IIDX INFINITAS 2020 (cache)
-- presets/infinitas_2024.json: beatmania IIDX INFINITAS 2024
-- presets/infinitas_2024_cache.json: beatmania IIDX INFINITAS 2024 (cache)
-- presets/eac/nost.json: NOSTALGIA
-- presets/eac/popn.json: pop'n music Lively
-- presets/eac/sdvx.json: SOUND VOLTEX EXCEED GEAR
+- eac/bonga: Bombergirl
+- eac/ddr: DanceDanceRevolution GRAND PRIX
+- eac/gitadora: GITADORA
+- infinitas_2020: beatmania IIDX INFINITAS 2020
+- infinitas_2020_cache: beatmania IIDX INFINITAS 2020 (cache)
+- infinitas_2024: beatmania IIDX INFINITAS 2024
+- infinitas_2024_cache: beatmania IIDX INFINITAS 2024 (cache)
+- eac/nost: NOSTALGIA
+- eac/popn: pop'n music Lively
+- eac/sdvx: SOUND VOLTEX EXCEED GEAR
