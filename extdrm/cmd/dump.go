@@ -16,9 +16,9 @@ import (
 
 // dumpCmd represents the dump command
 var dumpCmd = &cobra.Command{
-	Use:   "dump SOURCE DESTINATION PRESET",
+	Use:   "dump SOURCE DESTINATION",
 	Short: "Decrypt the contents of an encrypted extdrm filesystem",
-	Args:  cobra.MinimumNArgs(3),
+	Args:  cobra.MinimumNArgs(2),
 	Run:   runDump,
 }
 
@@ -35,9 +35,12 @@ func init() {
 	// is called directly, e.g.:
 	// dumpCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	dumpCmd.Flags().Int("workers", 0, "Number of workers. Specify a value less than one, and the number of logical CPUs available to the process will be used")
+	dumpCmd.Flags().String("preset", "", "Name or path to the preset")
 }
 
 func runDump(cmd *cobra.Command, args []string) {
+	var config *extdrm.DrmConfig
+
 	workers, _ := cmd.Flags().GetInt("workers")
 	if workers < 1 {
 		workers = runtime.NumCPU()
@@ -45,19 +48,15 @@ func runDump(cmd *cobra.Command, args []string) {
 
 	src := args[0]
 	dest := args[1]
-	filename := args[2]
 
-	data, err := os.ReadFile(filename)
+	presetName, _ := cmd.Flags().GetString("preset")
+	config, err := readPreset(presetName)
 	if err != nil {
-		log.Fatalln(err)
-	}
-	config := &extdrm.DrmConfig{}
-	if err := json.Unmarshal(data, config); err != nil {
-		log.Fatalln(err)
+		log.Fatalln("failed to read preset:", err)
 	}
 
 	start := time.Now()
-	ch, err := extdrm.ReadFS(*config, src)
+	ch, err := extdrm.ReadFS(src, config)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -98,4 +97,26 @@ func runDump(cmd *cobra.Command, args []string) {
 	}
 	wg.Wait()
 	log.Println("time elapsed:", time.Since(start))
+}
+
+func readPreset(name string) (*extdrm.DrmConfig, error) {
+	if name == "" {
+		// bruteforce will be used
+		return nil, nil
+	}
+
+	config := extdrm.LookupBuiltinPreset(name)
+	if config != nil {
+		return config, nil
+	}
+
+	data, err := os.ReadFile(name)
+	if err != nil {
+		return nil, err
+	}
+	config = &extdrm.DrmConfig{}
+	if err := json.Unmarshal(data, config); err != nil {
+		return nil, err
+	}
+	return config, nil
 }

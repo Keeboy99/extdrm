@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"hash"
 	"io"
+	"log"
 	"math/big"
 	"os"
 	"path"
@@ -75,11 +76,11 @@ type Metadata struct {
 	Files []MetadataEntry `json:"files"`
 }
 
-func ReadFS(config DrmConfig, root string) (chan DrmFile, error) {
+func ReadFS(root string, config *DrmConfig) (chan DrmFile, error) {
 	ch := make(chan DrmFile, 1)
 	state := &readState{
 		DrmConfig: config,
-		root:      root,
+		origRoot:  root,
 		ch:        ch,
 
 		sha384: sha512.New384(),
@@ -91,9 +92,10 @@ func ReadFS(config DrmConfig, root string) (chan DrmFile, error) {
 }
 
 type readState struct {
-	DrmConfig
-	root string
-	ch   chan DrmFile
+	*DrmConfig
+	origRoot string
+	root     string
+	ch       chan DrmFile
 
 	sha384 hash.Hash
 }
@@ -125,6 +127,27 @@ func (state *readState) run() error {
 const metaFilename = "/__metadata.metatxt"
 
 func (state *readState) readMetadata() (*Metadata, error) {
+	if state.DrmConfig == nil {
+		return state.readMetadataBruteforce()
+	}
+	return state.readMetdataInternal()
+}
+
+func (state *readState) readMetadataBruteforce() (*Metadata, error) {
+	for name, preset := range builtinPresets {
+		state.DrmConfig = preset
+		metadata, err := state.readMetdataInternal()
+		if err != nil {
+			// log.Printf("failed to decrypt metadata with built-in preset: %s: %v", name, err)
+			continue
+		}
+		log.Println("successfully decrypted metadata with built-in preset:", name)
+		return metadata, nil
+	}
+	return nil, errors.New("all metadata read attempts failed")
+}
+
+func (state *readState) readMetdataInternal() (*Metadata, error) {
 	f, err := state.openMetadata()
 	if err != nil {
 		return nil, err
@@ -152,10 +175,9 @@ func (state *readState) readMetadata() (*Metadata, error) {
 }
 
 func (state *readState) openMetadata() (f *os.File, err error) {
-	root := state.root
 	hash := state.hashPath(metaFilename)
 	for _, dir := range []string{"/", "/x", "/x2"} {
-		state.root = root + dir
+		state.root = state.origRoot + dir
 		if f, err = state.openFile(hash); err == nil {
 			break
 		}
