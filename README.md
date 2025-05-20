@@ -46,10 +46,10 @@ List of built-in presets and their respective games:
 - eac/bonga: Bombergirl
 - eac/ddr: DanceDanceRevolution GRAND PRIX
 - eac/gitadora: GITADORA
-- infinitas_2020: beatmania IIDX INFINITAS 2020
-- infinitas_2020_cache: beatmania IIDX INFINITAS 2020 (cache)
-- infinitas_2024: beatmania IIDX INFINITAS 2024
-- infinitas_2024_cache: beatmania IIDX INFINITAS 2024 (cache)
+- eac/infinitas_2020: beatmania IIDX INFINITAS 2020
+- eac/infinitas_2020_cache: beatmania IIDX INFINITAS 2020 (cache)
+- eac/infinitas_2024: beatmania IIDX INFINITAS 2024
+- eac/infinitas_2024_cache: beatmania IIDX INFINITAS 2024 (cache)
 - eac/nost: NOSTALGIA
 - eac/popn: pop'n music Lively
 - eac/sdvx: SOUND VOLTEX EXCEED GEAR
