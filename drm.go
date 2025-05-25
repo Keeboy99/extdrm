@@ -16,6 +16,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/YoshihikoAbe/fsdump"
 	"github.com/dgryski/go-camellia"
 )
 
@@ -25,12 +26,6 @@ type DrmConfig struct {
 	Magic         *big.Int      `json:"magic"`
 	DisableCRC    bool          `json:"disable_crc"`
 	SaltGenerator SaltGenerator `json:"salt_generator"`
-}
-
-type DrmFile struct {
-	io.Reader
-	io.Closer
-	Path string
 }
 
 type MetadataEntry struct {
@@ -76,8 +71,8 @@ type Metadata struct {
 	Files []MetadataEntry `json:"files"`
 }
 
-func ReadFS(root string, config *DrmConfig) (chan DrmFile, error) {
-	ch := make(chan DrmFile, 1)
+func ReadFS(root string, config *DrmConfig) (chan fsdump.File, error) {
+	ch := make(chan fsdump.File, 1)
 	state := &readState{
 		DrmConfig: config,
 		origRoot:  root,
@@ -95,7 +90,7 @@ type readState struct {
 	*DrmConfig
 	origRoot string
 	root     string
-	ch       chan DrmFile
+	ch       chan fsdump.File
 
 	sha384 hash.Hash
 }
@@ -113,7 +108,7 @@ func (state *readState) run() error {
 				continue
 			}
 
-			state.ch <- DrmFile{
+			state.ch <- fsdump.File{
 				Reader: state.makeReader(f, entry.SPath),
 				Path:   entry.SPath,
 				Closer: f,
@@ -165,7 +160,7 @@ func (state *readState) readMetdataInternal() (*Metadata, error) {
 
 	// the first file written to the channel is always
 	// the metadata file
-	state.ch <- DrmFile{
+	state.ch <- fsdump.File{
 		Reader: bytes.NewReader(b),
 		Closer: io.NopCloser(nil),
 		Path:   metaFilename,

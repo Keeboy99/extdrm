@@ -2,15 +2,12 @@ package cmd
 
 import (
 	"encoding/json"
-	"io"
 	"log"
 	"os"
-	"path"
-	"runtime"
-	"sync"
 	"time"
 
 	"github.com/YoshihikoAbe/extdrm"
+	"github.com/YoshihikoAbe/fsdump"
 	"github.com/spf13/cobra"
 )
 
@@ -42,10 +39,6 @@ func runDump(cmd *cobra.Command, args []string) {
 	var config *extdrm.DrmConfig
 
 	workers, _ := cmd.Flags().GetInt("workers")
-	if workers < 1 {
-		workers = runtime.NumCPU()
-	}
-
 	src := args[0]
 	dest := args[1]
 
@@ -56,46 +49,19 @@ func runDump(cmd *cobra.Command, args []string) {
 	}
 
 	start := time.Now()
+
 	ch, err := extdrm.ReadFS(src, config)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	wg := sync.WaitGroup{}
-	wg.Add(workers)
-	for i := 0; i < workers; i++ {
-		go func() {
-			for {
-				file, ok := <-ch
-				if !ok {
-					wg.Done()
-					return
-				}
-
-				func(file extdrm.DrmFile) {
-					defer file.Close()
-
-					dir, _ := path.Split(file.Path)
-					if err := os.MkdirAll(path.Join(dest, dir), 0777); err != nil {
-						log.Fatalln(err)
-						return
-					}
-
-					out, err := os.Create(path.Join(dest, file.Path))
-					if err != nil {
-						log.Fatalln(err)
-						return
-					}
-					defer out.Close()
-
-					if _, err := io.Copy(out, file); err != nil {
-						log.Fatalln(err)
-					}
-				}(file)
-			}
-		}()
+	dumper := fsdump.Dumper{
+		Src:        &fsdump.ChannelFileSource{Chan: ch},
+		Dest:       dest,
+		NumWorkers: workers,
 	}
-	wg.Wait()
+	dumper.Run()
+
 	log.Println("time elapsed:", time.Since(start))
 }
 
